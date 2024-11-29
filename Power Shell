@@ -1,0 +1,28 @@
+$targetGroup = "SGの名前"
+$rootFolderPath = ""
+$accessFound = $false
+
+$folders = Get-ChildItem -Path $rootFolderPath -Directory -Recurse | ForEach-Object {
+    $folderAcl = Get-Acl -Path $_.FullName
+    $accessRights = $folderAcl.Access | Where-Object { $_.IdentityReference.Value -eq "\$targetGroup" }
+    if ($accessRights.Count -gt 0) {
+        $accessFound = $true 
+        $_  
+    }
+}
+
+if ($accessFound) {
+    $output = @()
+    foreach ($folder in $folders) {
+        $outputItem = New-Object PSObject -Property @{
+            "FolderPath" = $folder.FullName
+            "GroupName" = $targetGroup
+        }
+        $output += $outputItem
+        Write-Host "フォルダ $($folder.FullName) にセキュリティグループ $targetGroup のアクセス権限が設定されています。"
+    }
+    $output | Export-Csv -Path "Z:\OutputFile.csv" -NoTypeInformation
+    Write-Host "検索結果が OutputFile.csv というファイルに保存されました。"
+} else {
+    Write-Host "指定したセキュリティグループ $targetGroup のアクセス権限が設定されたフォルダは見つかりませんでした。"
+}
