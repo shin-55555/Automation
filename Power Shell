@@ -1,20 +1,20 @@
-$targetGroup = "SGの名前"
-$rootFolderPath = ""
-$accessFound = $false
+$targetGroup = ""　　　#SGを設定
+$rootFolderPath = ""　 #対象共有フォルダのパス
+$accessFound = $false　#アクセス権限有無のフラグ
 
-$folders = Get-ChildItem -Path $rootFolderPath -Directory -Recurse | ForEach-Object {
+$folders = Get-ChildItem -Path $rootFolderPath -Directory -Recurse | ForEach-Object {　　#-Directory フォルダのみ、-Recurse 再帰的探索
     $folderAcl = Get-Acl -Path $_.FullName
     $accessRights = $folderAcl.Access | Where-Object { $_.IdentityReference.Value -eq "\$targetGroup" }
     if ($accessRights.Count -gt 0) {
-        $accessFound = $true 
-        $_  
+        $accessFound = $true 　　# アクセス権限が見つかった場合、フラグを true に設定
+        $_  　　　　　　　　　　 　#対象フォルダ名を返す
     }
 }
 
 if ($accessFound) {
-    $output = @()
+    $output = @() #配列の初期化
     foreach ($folder in $folders) {
-        $outputItem = New-Object PSObject -Property @{
+        $outputItem = New-Object PSObject -Property @{　#オブジェクトを作成
             "FolderPath" = $folder.FullName
             "GroupName" = $targetGroup
         }
@@ -26,3 +26,14 @@ if ($accessFound) {
 } else {
     Write-Host "指定したセキュリティグループ $targetGroup のアクセス権限が設定されたフォルダは見つかりませんでした。"
 }
+
+#参考情報
+#$test = Get-Acl -Path "Z:\"
+#$test.Access
+
+#FileSystemRights  : FullControl
+#AccessControlType : Allow
+#IdentityReference : 【対象フォルダに付与されたSG情報】
+#IsInherited       : True
+#InheritanceFlags  : ContainerInherit, ObjectInherit
+#PropagationFlags  : None
