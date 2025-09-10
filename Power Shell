@@ -1,20 +1,20 @@
-$targetGroup = ""　　　#SGを設定
-$rootFolderPath = ""　 #対象共有フォルダのパス
-$accessFound = $false　#アクセス権限有無のフラグ
+$targetGroup = ""　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　#SGを設定
+$rootFolderPath = ""　 　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　#対象の共有フォルダのパスを設定
+$accessFound = $false　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　#対象のSGが付与されたフォルダが存在するか
 
-$folders = Get-ChildItem -Path $rootFolderPath -Directory -Recurse | ForEach-Object {　　#-Directory フォルダのみ、-Recurse 再帰的探索
-    $folderAcl = Get-Acl -Path $_.FullName
-    $accessRights = $folderAcl.Access | Where-Object { $_.IdentityReference.Value -eq "\$targetGroup" }
-    if ($accessRights.Count -gt 0) {
-        $accessFound = $true 　　# アクセス権限が見つかった場合、フラグを true に設定
-        $_  　　　　　　　　　　 　#対象フォルダ名を返す
+$folders = Get-ChildItem -Path $rootFolderPath -Directory -Recurse | ForEach-Object {　　　　　　　　　　　　　　　　　　　　#-Directory フォルダのみ、-Recurse 再帰的探索、Get-ChildItem -Path　パス　で指定ディレクトリの内容を取得。
+    $folderAcl = Get-Acl -Path $_.FullName　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 #Get-Acl は アクセス制御リスト (ACL) を取得
+    $accessRights = $folderAcl.Access | Where-Object { $_.IdentityReference.Value -eq "\$targetGroup" }                  #$_ はパイプラインで渡される現在の要素を指します。IdentityReference は権限が付与されている ユーザーやグループ を表します。
+    if ($accessRights.Count -gt 0) {　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　#-gt → Greater Than（より大きい） 指定したセキュリティグループが付与されたフォルダが1つ以上存在するか
+        $accessFound = $true 　　                                                                                         # 指定したSGが付与されたフォルダが見つかった場合、フラグを true に設定
+        $_  　　　　　　　　　　 　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 #ForEach-Object の中で $_ を返すと、パイプラインを通じて $folders に追加されます。
     }
 }
 
 if ($accessFound) {
-    $output = @() #配列の初期化
+    $output = @()                                                                                                         #$output = @() で変数 $output に 空の配列を代入
     foreach ($folder in $folders) {
-        $outputItem = New-Object PSObject -Property @{　#オブジェクトを作成
+        $outputItem = New-Object PSObject -Property @{　                                                                  #空の汎用オブジェクトを作成してプロパティを設定
             "FolderPath" = $folder.FullName
             "GroupName" = $targetGroup
         }
@@ -27,6 +27,8 @@ if ($accessFound) {
     Write-Host "指定したセキュリティグループ $targetGroup のアクセス権限が設定されたフォルダは見つかりませんでした。"
 }
 
+
+---------------
 #参考情報
 #$test = Get-Acl -Path "Z:\"
 #$test.Access
@@ -37,3 +39,58 @@ if ($accessFound) {
 #IsInherited       : True
 #InheritanceFlags  : ContainerInherit, ObjectInherit
 #PropagationFlags  : None
+
+Get-ChildItem -Path
+1. 指定ディレクトリの内容を取得
+Get-ChildItem -Path "C:\Users\Username\Documents"
+2. サブフォルダーも含めて再帰的に取得
+Get-ChildItem -Path "C:\Users\Username\Documents" -Recurse
+3. 特定のファイル形式だけ取得
+Get-ChildItem -Path "C:\Users\Username\Documents" -Filter "*.txt"
+4. ディレクトリのみ、またはファイルのみを取得
+# フォルダーだけ
+Get-ChildItem -Path "C:\Users\Username\Documents" -Directory
+# ファイルだけ
+Get-ChildItem -Path "C:\Users\Username\Documents" -File
+
+Get-Acl とは
+Get-Acl は アクセス制御リスト (ACL) を取得するコマンドレットです。
+ファイルやフォルダーに対して 誰がどの権限を持っているか を確認できます。
+Get-Acl -Path $_.FullName について
+$_ は パイプラインで渡されている現在のオブジェクト を指します。
+.FullName はそのオブジェクト（ファイルやフォルダー）の フルパス です。
+パイプラインで渡ってきたファイルやフォルダーの ACL を取得しています。
+
+$_ と IdentityReference.Value
+$_ はパイプラインで渡される現在の要素を指します
+IdentityReference は権限が付与されている ユーザーやグループ を表します。
+
+$accessRights.Count -gt 0
+PowerShell での -gt は 比較演算子 の一つで、
+-gt → Greater Than（より大きい）
+指定したセキュリティグループが付与されたフォルダが1つ以上存在するか
+
+ForEach-Object の中で $_ を返すと、パイプラインを通じて $folders に追加されます。
+パイプライン経由で複数オブジェクトを返せば $folders は複数値を持つことができます。
+PowerShell では $folders のような変数に 複数のオブジェクトを格納することが可能
+
+@()
+空の配列 を作る PowerShell の構文
+$output = @() で変数 $output に 空の配列を代入
++= でオブジェクトを追加
+
+汎用オブジェクト（PSObject） 
+任意のプロパティを持つ
+空の汎用オブジェクトを作成してプロパティを設定
+$obj = New-Object PSObject -Property @{
+    "Name" = "Alice"
+    "Age"  = 25
+}
+
+Where-Object 
+配列やコレクションの中から条件に合うものを取り出す
+
+$accessRights
+初期化必要なし
+
+
