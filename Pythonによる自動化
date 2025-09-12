@@ -1,18 +1,16 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from selenium import webdriver                                                                                                                        ＃Selenium の webdriver モジュール をインポート
+from selenium.webdriver.common.by import By                                                                                                           ＃HTML 要素を特定するための方法（By.ID, By.XPATH, By.CLASS_NAME など）を提供                                                                                                    
+from selenium.webdriver.chrome.service import Service                                                                                                 ＃ChromeDriver を管理する Service クラス
+from selenium.webdriver.support.ui import WebDriverWait                                                                                               ＃要素が DOM に現れるまで、またはクリック可能になるまで待機するため
+from selenium.webdriver.support import expected_conditions as EC                                                                                      ＃「クリック可能になる」「表示される」「存在する」などの条件を指定して待機できる           
 import time
 
-# ChromeDriverのパス
-driver_path = r"C:/chromedriver.exe"
+driver_path = r"C:/chromedriver.exe"                                                                                                                  ＃ ChromeDriverのパス
 
-# ドライバー起動
-service = Service(driver_path)
-driver = webdriver.Chrome(service=service)
+service = Service(driver_path)                                                                                                                        ＃ドライバー起動
+driver = webdriver.Chrome(service=service)                                                                                                            ＃Chrome ブラウザを起動して、Selenium とブラウザの セッションを作成
 
-# 操作したいURLのリスト
+                                                                                                                                                      ＃操作したいURLのリスト
 urls = [
     "https://accounts.yahoo.co.jp/activity/access/site?done=https%3A%2F%2Fwww.yahoo.co.jp%2F",
     "https://accounts.yahoo.co.jp/activity/access/search?done=https%3A%2F%2Fwww.yahoo.co.jp%2F",
@@ -20,42 +18,41 @@ urls = [
 ]
 
 try:
-    # URLを1つずつ処理
+                                                                                                                                                    　＃URLを1つずつ処理
     for url in urls:
         print(f"アクセス中: {url}")
-        driver.get(url)
-        wait = WebDriverWait(driver, 30)
+        driver.get(url)                                                                                                                               ＃ブラウザで指定 URL を開く
+        wait = WebDriverWait(driver, 30)                                                                                                              ＃最大30秒まで待機する WebDriverWait オブジェクト を作成
 
-        while True:
-            try:
-                # 全選択用チェックボックスを探してクリック
+        while True:                                                                                                                                   ＃最初に無限ループを開始する　while 条件⇒trueの間繰り返す
+            try:                                                                                                                                      
                 select_all_checkbox = wait.until(
-                    EC.element_to_be_clickable((By.XPATH, '//*[@id="yjMain"]/div/div[1]/form/table/thead/tr/th[1]/label/span[1]'))
+                    EC.element_to_be_clickable((By.XPATH, '//*[@id="yjMain"]/div/div[1]/form/table/thead/tr/th[1]/label/span[1]'))                    ＃XPATHで全選択チェックボックスを探す。クリック可能になるまで最大30秒待機
                 )
-                select_all_checkbox.click()
-                time.sleep(0.5)  # UI更新待機
+                select_all_checkbox.click()                                                                                                           ＃チェックボックスをクリックして、全履歴を選択                                                                                                           
+                time.sleep(0.5)                                                                                                                       ＃UI更新待機
 
-                # 削除ボタンが表示され、クリック可能になるまで待ってクリック(チェックボックスにチェックが入ると削除ボタンが有効化される仕様)
+                                                                                                                                                      ＃XPATHで削除ボタンを探す
                 delete_button = wait.until(
                     EC.element_to_be_clickable(
                         (By.XPATH, '//*[@id="yjMain"]/div/div[1]/div/button[2]/span')
                     )
                 )
-                if delete_button.is_enabled():
+                if delete_button.is_enabled():                                                                                                        ＃削除ボタン押下できるのであれば、クリックする
                    delete_button.click()
-                   confirm_delete_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="deleteHistoryModal"]/div[2]/div[3]/a[2]')))
-                   confirm_delete_button.click()
-                   confirm_delete_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="completeDeleteHistoriesModal"]/div[2]/div[2]/a')))
-                   confirm_delete_button.click()
+                   confirm_delete_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="deleteHistoryModal"]/div[2]/div[3]/a[2]')))     ＃削除確認用のモーダル（ポップアップ画面）で「削除する」ボタンがクリック可能になるまで待機。
+                   confirm_delete_button.click()                                                                                                      ＃削除ボタン押下
+                   confirm_delete_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="completeDeleteHistoriesModal"]/div[2]/div[2]/a')))＃「削除完了しました」などの完了モーダルが表示されるのを待機
+                   confirm_delete_button.click()                                                                                                        ＃OKボタン押下
                 else:
                     print("削除ボタンが無効なためスキップします")
+                    break
 
-
-                # 削除後の反映待ち
+                　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　＃削除後の反映待ち
                 time.sleep(2)
 
             except Exception:
-                # チェックボックスが見つからない、または削除ボタンがない → 終了
+                                                                                                                                                       ＃チェックボックスが見つからない、または削除ボタンがない → 終了
                 print(f"{url} の処理が完了しました。次のURLへ。")
                 break
 
@@ -65,3 +62,118 @@ except Exception as e:
 finally:
     driver.quit()
     print("全てのURL処理が完了しました。ブラウザを閉じました。")
+
+-----
+参考情報
+
+・Seleniumとは、Webブラウザの操作を自動化するためのオープンソースフレームワークです
+・webdriver-manager を使った自動更新を導入していないので、ChromeDriverとChromeのバージョンがずれるとSessionNotCreatedExceptionの例外エラーが出る
+・DOM（Document Object Model）とは？
+「HTML や XML の文書構造を、プログラムから扱えるようにしたモデル」のことです。
+要するに、ブラウザが表示しているページをツリー構造で表現したもの です。
+HTML ページ：
+<html>
+  <body>
+    <h1>タイトル</h1>
+    <p>本文</p>
+    <button>クリック</button>
+  </body>
+</html>
+
+この HTML は DOM 上ではこんなツリーになります：
+
+Document
+ └─ html
+     └─ body
+         ├─ h1 ("タイトル")
+         ├─ p ("本文")
+         └─ button ("クリック")
+
+Selenium と DOM の関係
+Selenium は ブラウザが持っている DOM にアクセス して操作します。
+例えば：
+driver.find_element(By.XPATH, '//*[@id="submit"]')
+→ DOM 上で id="submit" の要素を探す
+→ クリックしたりテキストを取得したりできる
+ページロード中は DOM がまだ完成していない場合がある
+そのため WebDriverWait や EC.element_to_be_clickable で DOM に要素が現れるまで待つ必要がある
+・XPath とは
+XPath = XML Path Language
+HTML や XML の DOM 上で特定の要素を指定するための「道順」 を表す言語です。
+Selenium では 要素を一意に特定する方法のひとつ として使われます。
+'//*[@id="yjMain"]/div/div[1]/form/table/thead/tr/th[1]/label/span[1]'
+//*[@id="yjMain"] → id が yjMain の要素を探す
+/div/div[1]/form/table/thead/tr/th[1]/label/span[1] → その中の 階層構造を順番にたどる
+つまり「チェックボックスの span 要素」を特定する XPath
+
+・モジュールインポート
+from selenium import webdriver
+Selenium の webdriver モジュール をインポート
+webdriver.Chrome() などのクラスでブラウザ操作を行うために必要
+
+from selenium.webdriver.common.by import By
+HTML 要素を特定するための方法（By.ID, By.XPATH, By.CLASS_NAME など）を提供
+例えば XPATH で要素を探す場合に使う
+
+from selenium.webdriver.chrome.service import Service
+ChromeDriver を管理する Service クラス
+ChromeDriver の起動、停止、パス指定を行うために使用
+
+from selenium.webdriver.support.ui import WebDriverWait
+WebDriverWait クラス
+要素が DOM に現れるまで、またはクリック可能になるまで待機するための仕組み
+
+from selenium.webdriver.support import expected_conditions as EC
+expected_conditions（EC）
+「クリック可能になる」「表示される」「存在する」などの条件を指定して待機できる
+
+import time
+標準ライブラリの time モジュール
+time.sleep() で固定時間の待機を入れるために使う
+
+service = Service(driver_path)
+ChromeDriver を操作するための サービスオブジェクトを作成
+Selenium がブラウザプロセスを管理できるようになる
+
+driver = webdriver.Chrome(service=service)
+Chrome ブラウザを起動して、Selenium とブラウザの セッションを作成
+この時点で ChromeDriver とブラウザが通信を開始
+
+・try: 
+例外処理（エラーハンドリング）をするための構文です。
+仕組み
+try:
+    # エラーが出るかもしれない処理
+except SomeError as e:
+    # エラーが発生したときに実行される処理
+    print("エラー:", e)
+else:
+    # エラーが発生しなかった場合に実行される処理（任意）
+    print("成功しました")
+finally:
+    # エラーの有無に関わらず必ず実行される処理（任意）
+    print("終了処理")
+
+・driver.get(url)
+ブラウザで指定 URL を開く
+内部的には HTTP リクエストを送信し、ページロード完了まで待機
+
+・while True:
+    print("これは永遠に繰り返される")
+while 条件: という構文は「条件が True の間、繰り返す」。
+True は常に真なので、終了条件を書かない限り永遠に繰り返す。
+while True:
+    try:
+        # チェックボックスをクリックして削除する処理
+        ...
+    except Exception:
+        print(f"{url} の処理が完了しました。次のURLへ。")
+        break
+最初に無限ループを開始する
+→ Yahoo!のページに残っている履歴を全部削除するため。
+削除できる要素（チェックボックスや削除ボタン）がある間は繰り返す
+もしみつからなければ Exception が発生する。
+エラー（対象が見つからない）が起きたら except に入り break
+break はループを終了させる命令。
+
+
